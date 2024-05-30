@@ -49,6 +49,9 @@ const resolvers = {
   },
   Mutation: {
     addActivity: (_, { time, type, distance, calories, bpm, user, userImage, imageUrl }) => {
+      // Introduzindo um erro propositalmente para simulação
+      throw new Error('Simulated server error');
+
       const newActivity = {
         id: activities.length + 1,
         time,
