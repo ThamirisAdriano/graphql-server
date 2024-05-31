@@ -12,6 +12,7 @@
   "dependencies": {
     "apollo-server": "^3.13.0",
     "fs": "^0.0.1-security",
-    "graphql": "^16.8.1"
+    "graphql": "^16.8.1",
+    "graphql-subscriptions": "^2.0.0"
   }
 }

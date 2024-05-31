@@ -1,10 +1,12 @@
 const { ApolloServer, gql } = require('apollo-server');
+const { PubSub } = require('graphql-subscriptions');
 const fs = require('fs');
 
 // Carregar dados iniciais
 let activities = JSON.parse(fs.readFileSync('./data/activities.json', 'utf8'));
+const pubsub = new PubSub();
+const ACTIVITY_ADDED = 'ACTIVITY_ADDED';
 
-// Esquema GraphQL
 const typeDefs = gql`
   type Activity {
     id: ID!
@@ -34,9 +36,12 @@ const typeDefs = gql`
       imageUrl: String!
     ): Activity
   }
+
+  type Subscription {
+    activityAdded: Activity
+  }
 `;
 
-// Resolvers
 const resolvers = {
   Query: {
     mockActivities: (_, { user }) => {
@@ -62,15 +67,27 @@ const resolvers = {
       };
       activities.push(newActivity);
       fs.writeFileSync('./data/activities.json', JSON.stringify(activities, null, 2));
-      console.log("Added new activity:", newActivity);
+      pubsub.publish(ACTIVITY_ADDED, { activityAdded: newActivity });
       return newActivity;
+    },
+  },
+  Subscription: {
+    activityAdded: {
+      subscribe: () => pubsub.asyncIterator([ACTIVITY_ADDED]),
     },
   },
 };
 
 // Servidor Apollo
-const server = new ApolloServer({ typeDefs, resolvers });
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  subscriptions: {
+    path: '/subscriptions',
+  },
+});
 
-server.listen().then(({ url }) => {
+server.listen().then(({ url, subscriptionsUrl }) => {
   console.log(`🚀 Server ready at ${url}`);
+  console.log(`🚀 Subscriptions ready at ${subscriptionsUrl}`);
 });
